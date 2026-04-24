@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id                     Int       @id @default(autoincrement())
+  first_name             String
+  last_name              String
+  date_of_birth          DateTime
+  phone                  String?
+  email                  String?
+  preferred_contact_method String? @default("email")
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  appointments           Appointment[]
+  waitlist_entries       WaitlistEntry[]
+  intake_forms           IntakeForm[]
+  reminder_logs          ReminderLog[]
+}
+
+model Appointment {
+  id                     Int       @id @default(autoincrement())
+  patient_id             Int
+  provider_name          String
+  appointment_type       String
+  appointment_datetime   DateTime
+  status                 String    @default("scheduled")
+  confirmation_status    String?
+  notes                  String?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  patient                Patient   @relation(fields: [patient_id], references: [id])
+  intake_form            IntakeForm?
+  reminder_logs          ReminderLog[]
+}
+
+model ReminderLog {
+  id                     Int       @id @default(autoincrement())
+  appointment_id         Int
+  patient_id             Int
+  reminder_type          String
+  sent_at                DateTime  @default(now())
+  status                 String
+  message                String
+
+  appointment            Appointment @relation(fields: [appointment_id], references: [id])
+  patient                Patient     @relation(fields: [patient_id], references: [id])
+}
+
+model WaitlistEntry {
+  id                         Int       @id @default(autoincrement())
+  patient_id                 Int
+  requested_appointment_type String
+  preferred_date             DateTime?
+  preferred_time_range       String?
+  status                     String    @default("waiting")
+  notified_at                DateTime?
+  created_at                 DateTime  @default(now())
+  updated_at                 DateTime  @updatedAt
+
+  patient                    Patient   @relation(fields: [patient_id], references: [id])
+}
+
+model IntakeForm {
+  id                         Int       @id @default(autoincrement())
+  patient_id                 Int
+  appointment_id             Int       @unique
+  reason_for_visit           String
+  insurance_provider         String?
+  insurance_member_id        String?
+  allergies                  String?
+  medications                String?
+  emergency_contact_name     String?
+  emergency_contact_phone    String?
+  notes                      String?
+  submitted_at               DateTime  @default(now())
+
+  patient                    Patient     @relation(fields: [patient_id], references: [id])
+  appointment                Appointment @relation(fields: [appointment_id], references: [id])
+}
