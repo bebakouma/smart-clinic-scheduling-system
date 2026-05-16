@@ -3,7 +3,8 @@ const { success } = require('../middleware/responseEnvelope');
 
 async function getAll(req, res, next) {
   try {
-    const patients = await patientsService.getAll();
+    const search = req.query.search || null;
+    const patients = await patientsService.getAll(search);
     success(res, patients);
   } catch (err) { next(err); }
 }

@@ -7,12 +7,14 @@ export default function Patients() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', date_of_birth: '', phone: '', email: '', preferred_contact_method: 'email' });
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
-  useEffect(() => { loadPatients(); }, []);
+  useEffect(() => { loadPatients(); }, [search]);
 
   async function loadPatients() {
     try {
-      const data = await patientService.getAll();
+      const params = search ? `?search=${encodeURIComponent(search)}` : '';
+      const data = await patientService.getAll(params);
       setPatients(data);
     } catch (err) { console.error(err); }
   }

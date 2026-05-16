@@ -1,7 +1,7 @@
 const patientsRepo = require('../repositories/patients.repository');
 
-async function getAll() {
-  return patientsRepo.findAll();
+async function getAll(search = null) {
+  return patientsRepo.findAll(search);
 }
 
 async function getById(id) {

@@ -36,6 +36,17 @@ async function create(data) {
     throw err;
   }
 
+  // Check for provider scheduling conflict (same provider, overlapping 30-min window)
+  const apptTime = new Date(data.appointment_datetime);
+  const windowStart = new Date(apptTime.getTime() - 30 * 60 * 1000);
+  const windowEnd = new Date(apptTime.getTime() + 30 * 60 * 1000);
+  const conflict = await appointmentsRepo.findConflict(data.provider_name, windowStart, windowEnd);
+  if (conflict) {
+    const err = new Error('Provider has a scheduling conflict');
+    err.type = 'conflict';
+    throw err;
+  }
+
   return appointmentsRepo.create({
     patient_id: data.patient_id,
     provider_name: data.provider_name,

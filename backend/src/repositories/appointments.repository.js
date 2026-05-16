@@ -42,4 +42,14 @@ async function remove(id) {
   return prisma.appointment.delete({ where: { id } });
 }
 
-module.exports = { findAll, findById, create, update, remove };
+async function findConflict(providerName, windowStart, windowEnd, excludeId = null) {
+  const where = {
+    provider_name: providerName,
+    status: { notIn: ['cancelled'] },
+    appointment_datetime: { gte: windowStart, lte: windowEnd }
+  };
+  if (excludeId) where.id = { not: excludeId };
+  return prisma.appointment.findFirst({ where });
+}
+
+module.exports = { findAll, findById, create, update, remove, findConflict };

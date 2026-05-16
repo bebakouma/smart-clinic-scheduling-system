@@ -1,7 +1,16 @@
 const { prisma } = require('../config/database');
 
-async function findAll() {
-  return prisma.patient.findMany({ orderBy: { created_at: 'desc' } });
+async function findAll(search = null) {
+  const where = {};
+  if (search) {
+    where.OR = [
+      { first_name: { contains: search, mode: 'insensitive' } },
+      { last_name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search, mode: 'insensitive' } }
+    ];
+  }
+  return prisma.patient.findMany({ where, orderBy: { created_at: 'desc' } });
 }
 
 async function findById(id) {
