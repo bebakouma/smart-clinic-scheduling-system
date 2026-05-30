@@ -6,7 +6,7 @@ async function getSummary() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const [todayCount, upcomingCount, cancelledCount, noShowCount, waitlistCount] = await Promise.all([
+  const [todayCount, upcomingCount, cancelledCount, noShowCount, waitlistCount, confirmedCount] = await Promise.all([
     prisma.appointment.count({
       where: { appointment_datetime: { gte: today, lt: tomorrow } }
     }),
@@ -21,6 +21,9 @@ async function getSummary() {
     }),
     prisma.waitlistEntry.count({
       where: { status: 'waiting' }
+    }),
+    prisma.appointment.count({
+      where: { confirmation_status: 'confirmed', status: { not: 'cancelled' } }
     })
   ]);
 
@@ -29,7 +32,8 @@ async function getSummary() {
     upcoming: upcomingCount,
     cancelled: cancelledCount,
     no_shows: noShowCount,
-    waitlist_active: waitlistCount
+    waitlist_active: waitlistCount,
+    confirmed: confirmedCount
   };
 }
 

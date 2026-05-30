@@ -29,6 +29,7 @@ export default function Dashboard() {
   const cards = summary ? [
     { label: "Today's Appointments", value: summary.today, color: 'blue' },
     { label: 'Upcoming', value: summary.upcoming, color: 'green' },
+    { label: 'Confirmed', value: summary.confirmed, color: 'emerald' },
     { label: 'Cancelled', value: summary.cancelled, color: 'yellow' },
     { label: 'No-Shows', value: summary.no_shows, color: 'red' },
     { label: 'Waitlist Active', value: summary.waitlist_active, color: 'purple' }

@@ -40,6 +40,13 @@ async function updateStatus(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function confirm(req, res, next) {
+  try {
+    const appointment = await appointmentsService.confirm(parseInt(req.params.id));
+    success(res, appointment);
+  } catch (err) { next(err); }
+}
+
 async function remove(req, res, next) {
   try {
     await appointmentsService.remove(parseInt(req.params.id));
@@ -47,4 +54,4 @@ async function remove(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, remove };
+module.exports = { getAll, getById, create, update, updateStatus, confirm, remove };

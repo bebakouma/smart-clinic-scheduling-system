@@ -115,9 +115,24 @@ async function updateStatus(id, status) {
   return updated;
 }
 
+async function confirm(id) {
+  const existing = await getById(id);
+
+  if (TERMINAL_STATUSES.includes(existing.status)) {
+    const err = new Error(`Cannot confirm ${existing.status} appointment`);
+    err.type = 'conflict';
+    throw err;
+  }
+
+  return appointmentsRepo.update(id, {
+    confirmation_status: 'confirmed',
+    status: 'confirmed'
+  });
+}
+
 async function remove(id) {
   await getById(id);
   return appointmentsRepo.remove(id);
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, remove, VALID_STATUSES };
+module.exports = { getAll, getById, create, update, updateStatus, confirm, remove, VALID_STATUSES };
