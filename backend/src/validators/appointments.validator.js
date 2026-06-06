@@ -19,4 +19,9 @@ const statusSchema = Joi.object({
   status: Joi.string().valid('scheduled', 'confirmed', 'cancelled', 'completed', 'no_show').required()
 });
 
-module.exports = { createSchema, updateSchema, statusSchema };
+const rescheduleSchema = Joi.object({
+  appointment_datetime: Joi.date().iso().required(),
+  reason: Joi.string().trim().allow(null, '').optional()
+});
+
+module.exports = { createSchema, updateSchema, statusSchema, rescheduleSchema };

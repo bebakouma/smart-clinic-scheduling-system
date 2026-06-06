@@ -130,9 +130,48 @@ async function confirm(id) {
   });
 }
 
+async function reschedule(id, newDatetime, reason) {
+  const existing = await getById(id);
+
+  if (TERMINAL_STATUSES.includes(existing.status)) {
+    const err = new Error(`Cannot reschedule ${existing.status} appointment`);
+    err.type = 'conflict';
+    throw err;
+  }
+
+  // Validate future date
+  if (new Date(newDatetime) <= new Date()) {
+    const err = new Error('New appointment date must be in the future');
+    err.type = 'validation';
+    err.details = [{ field: 'appointment_datetime', message: 'Must be a future date' }];
+    throw err;
+  }
+
+  // Check for provider conflict at new time
+  const apptTime = new Date(newDatetime);
+  const windowStart = new Date(apptTime.getTime() - 30 * 60 * 1000);
+  const windowEnd = new Date(apptTime.getTime() + 30 * 60 * 1000);
+  const conflict = await appointmentsRepo.findConflict(existing.provider_name, windowStart, windowEnd, id);
+  if (conflict) {
+    const err = new Error('Provider has a scheduling conflict at the new time');
+    err.type = 'conflict';
+    throw err;
+  }
+
+  const updateData = {
+    appointment_datetime: new Date(newDatetime),
+    status: 'scheduled',
+    notes: reason
+      ? `${existing.notes ? existing.notes + ' | ' : ''}Rescheduled: ${reason}`
+      : existing.notes
+  };
+
+  return appointmentsRepo.update(id, updateData);
+}
+
 async function remove(id) {
   await getById(id);
   return appointmentsRepo.remove(id);
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, remove, VALID_STATUSES };
+module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, VALID_STATUSES };

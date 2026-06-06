@@ -47,6 +47,17 @@ async function confirm(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function reschedule(req, res, next) {
+  try {
+    const appointment = await appointmentsService.reschedule(
+      parseInt(req.params.id),
+      req.body.appointment_datetime,
+      req.body.reason
+    );
+    success(res, appointment);
+  } catch (err) { next(err); }
+}
+
 async function remove(req, res, next) {
   try {
     await appointmentsService.remove(parseInt(req.params.id));
@@ -54,4 +65,4 @@ async function remove(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, remove };
+module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove };
