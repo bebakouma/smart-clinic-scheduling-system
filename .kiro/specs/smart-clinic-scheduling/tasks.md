@@ -51,7 +51,7 @@ This plan implements the Smart Clinic Scheduling System MVP using React, Node.js
     - `backend/src/routes/appointments.routes.js` — wire GET, POST, PUT, PATCH, DELETE endpoints
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 4.1, 4.3, 5.1, 5.2, 5.3_
 
-  - [ ] 4.2 Write property tests for Appointment module
+  - [x] 4.2 Write property tests for Appointment module
     - **Property 3: Appointment creation defaults to scheduled**
     - **Validates: Requirements 2.1**
     - **Property 4: Past date rejection**
