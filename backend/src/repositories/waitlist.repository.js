@@ -43,7 +43,7 @@ async function findMatchingEntries(appointmentType, preferredDate) {
   }
   return prisma.waitlistEntry.findMany({
     where,
-    orderBy: { created_at: 'asc' }
+    orderBy: [{ created_at: 'asc' }, { id: 'asc' }]
   });
 }
 
