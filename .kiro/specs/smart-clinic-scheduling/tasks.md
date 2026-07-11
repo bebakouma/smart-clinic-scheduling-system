@@ -91,7 +91,7 @@ This plan implements the Smart Clinic Scheduling System MVP using React, Node.js
     - **Property 11: Waitlist entry creation defaults to waiting**
     - **Validates: Requirements 7.1**
 
-  - [ ] 6.4 Write unit tests for Waitlist service
+  - [x] 6.4 Write unit tests for Waitlist service
     - Test matching logic: type match, date match, oldest-first selection
     - Test no-match scenario
     - _Requirements: 7.2, 7.3, 7.5_
