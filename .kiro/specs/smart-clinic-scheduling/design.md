@@ -327,6 +327,149 @@ The following properties were derived from the acceptance criteria in the requir
 
 **Validates: Requirements 11.3**
 
+## Waitlist and Reminder Workflows
+
+### Waitlist Matching Flow
+
+When an appointment is cancelled, the system automatically searches for a matching waitlist entry and notifies the oldest qualifying patient.
+
+```mermaid
+sequenceDiagram
+    actor Staff
+    participant API
+    participant AppointmentService
+    participant WaitlistService
+    participant WaitlistRepo
+    participant DB
+
+    Staff->>API: PATCH /api/appointments/:id/status { status: "cancelled" }
+    API->>AppointmentService: updateStatus(id, "cancelled")
+    AppointmentService->>DB: Update appointment status to cancelled
+    AppointmentService->>WaitlistService: processCancellation(appointment)
+    WaitlistService->>WaitlistRepo: findMatchingEntries(type, date)
+    WaitlistRepo->>DB: SELECT WHERE type match AND date match AND status="waiting" ORDER BY created_at ASC, id ASC
+    DB-->>WaitlistRepo: matching entries (oldest first)
+    WaitlistRepo-->>WaitlistService: matches[]
+    alt Match found
+        WaitlistService->>WaitlistRepo: update(matches[0].id, { status: "notified", notified_at: now })
+        WaitlistRepo->>DB: UPDATE waitlist_entries
+        WaitlistService-->>AppointmentService: notified entry
+    else No match
+        WaitlistService-->>AppointmentService: null
+    end
+    AppointmentService-->>API: updated appointment
+    API-->>Staff: 200 OK
+```
+
+**Tie-breaking rule**: When multiple waitlist entries share the same `appointment_type` and `preferred_date`, the system selects the entry with the earliest `created_at`. If two entries have the same `created_at` timestamp, the entry with the lower `id` (inserted first) is selected. This guarantees a strict FIFO order with no ambiguity.
+
+### Reminder Generation Flow
+
+The reminder process is triggered manually via `POST /api/reminders/run`. It scans for upcoming appointments and creates log entries for eligible ones.
+
+```mermaid
+flowchart TD
+    A[POST /api/reminders/run] --> B[Query appointments\nwithin next 24 hours]
+    B --> C{Status = cancelled?}
+    C -- Yes --> D[Skip]
+    C -- No --> E{Already has\nreminder log?}
+    E -- Yes --> D
+    E -- No --> F[Create ReminderLog entry\nusing patient.preferred_contact_method]
+    F --> G[Add to results]
+    D --> H{More appointments?}
+    G --> H
+    H -- Yes --> C
+    H -- No --> I[Return results array]
+```
+
+**Eligibility rules**:
+1. Appointment datetime must be between `now` and `now + 24 hours`
+2. Appointment status must not be `cancelled`
+3. No existing `ReminderLog` entry for this appointment (prevents duplicates)
+4. Reminder type is derived from `patient.preferred_contact_method` (defaults to `email`)
+
+## Security and Access Control
+
+### Current State (MVP)
+
+The current MVP does not implement authentication. All API endpoints are accessible without credentials. This is intentional for the capstone demonstration environment where the focus is on core scheduling logic, data integrity, and testing correctness.
+
+### Planned Security Design
+
+The following security controls are planned for a production version:
+
+#### Role-Based Access Control (RBAC)
+
+| Role | Permissions |
+|------|-------------|
+| Admin | Full access to all resources including user management |
+| Clinic Staff | Create/read/update patients, appointments, waitlist, intake forms |
+| Read-Only | View appointments and dashboard only (e.g., front desk display) |
+
+Access would be enforced via JWT middleware inserted between the route and controller layers:
+
+```
+Routes → AuthMiddleware (JWT verify) → RoleMiddleware (check role) → Controllers
+```
+
+#### Patient Data Privacy
+
+- Patient PII (name, DOB, phone, email) should never appear in server logs
+- API responses should omit sensitive fields not needed by the requesting role
+- Database connections must use SSL in production (`DATABASE_URL` with `sslmode=require`)
+- All patient data should be transmitted over HTTPS only
+
+#### API Security Controls
+
+| Control | Approach |
+|---------|----------|
+| Authentication | JWT Bearer tokens with expiry |
+| Authorization | Role-based middleware per route |
+| Input validation | Joi schemas on all POST/PUT/PATCH endpoints (already implemented) |
+| Error messages | Generic messages exposed to client; details logged server-side only (already implemented) |
+| Rate limiting | `express-rate-limit` middleware on all `/api/*` routes |
+| CORS | Restrict `allowedOrigins` to known frontend domains in production |
+
+#### Security Risk Matrix
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Unauthorized access to patient records | High (no auth in MVP) | High | Add JWT auth before production deployment |
+| SQL injection | Low (Prisma parameterizes all queries) | High | Already mitigated by ORM |
+| Sensitive data in logs | Medium | Medium | Sanitize log output, never log request bodies with PII |
+| Brute force on auth endpoints | Medium | Medium | Rate limiting + account lockout |
+| Insecure direct object reference | Medium | High | Validate resource ownership per request |
+
+## Future Enhancements
+
+### Predictive No-Show Detection
+
+A future version of the system could reduce no-shows by identifying high-risk appointments before they occur.
+
+**Approach**: Analyze historical appointment data to flag patients with a pattern of missed appointments. A simple rule-based implementation could mark an appointment as "at risk" if the patient has missed more than 2 of their last 5 appointments.
+
+**Implementation path**:
+1. Add a `no_show_risk` field to the `Appointment` model (`low` | `medium` | `high`)
+2. Add a service function that calculates risk score based on patient history at scheduling time
+3. Surface the risk indicator on the dashboard and appointment list
+4. Optionally trigger an additional reminder for high-risk appointments
+
+**This feature is out of scope for the current MVP** but the data model already captures the `no_show` status needed to build it.
+
+### Smart Triage
+
+A future enhancement could collect basic symptom or reason information from patients before their appointment is confirmed, allowing clinic staff to prioritize urgent cases.
+
+**Approach**: Extend the intake form to include a triage questionnaire (symptom severity, duration, urgency level). A triage score would be calculated and surfaced to staff before the appointment.
+
+**Implementation path**:
+1. Add `triage_score` and `urgency_level` fields to `IntakeForm`
+2. Add a triage question set to the intake form UI
+3. Add a service function that computes urgency from responses
+4. Flag high-urgency intake forms on the dashboard
+
+**This feature is out of scope for the current MVP.** The existing `IntakeForm` model provides the foundation for this enhancement without schema changes to other models.
+
 ## Error Handling
 
 ### Validation Errors (400)
