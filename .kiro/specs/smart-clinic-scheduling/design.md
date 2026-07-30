@@ -6,6 +6,101 @@ The Smart Clinic Scheduling System is a full-stack JavaScript application using 
 
 This design covers the Version 1 MVP: patient CRUD, appointment scheduling/rescheduling/cancellation/status tracking, simulated reminders, waitlist matching, patient intake forms, and a staff dashboard.
 
+## Project Progress
+
+### Module Implementation Status
+
+| Module | Backend | Unit Tests | Property Tests | Frontend |
+|--------|---------|------------|----------------|----------|
+| Patient | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+| Appointment | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+| Waitlist | ✅ Complete | ✅ Complete | ⬜ Pending | ✅ Complete |
+| Reminder | ✅ Complete | ✅ Complete | ⬜ Pending | ✅ Complete |
+| Intake Form | ✅ Complete | ⬜ Pending | ⬜ Pending | ✅ Complete |
+| Dashboard | ✅ Complete | ⬜ Pending | ⬜ Pending | ✅ Complete |
+| Authentication | ⬜ Not in MVP | ⬜ Not in MVP | ⬜ Not in MVP | ⬜ Not in MVP |
+
+### Test Coverage Summary
+
+| Test Suite | File | Tests | Status |
+|------------|------|-------|--------|
+| Unit | `appointments.service.test.js` | 10 | ✅ Passing |
+| Unit | `patients.service.test.js` | 10 | ✅ Passing |
+| Unit | `waitlist.service.test.js` | 11 | ✅ Passing |
+| Unit | `reminders.service.test.js` | 8 | ✅ Passing |
+| Property | `appointments.property.test.js` | 9 | ✅ Passing |
+| Property | `patients.property.test.js` | 7 | ✅ Passing |
+| **Total** | | **55** | **✅ All Passing** |
+
+## Known Limitations
+
+The following limitations apply to the current MVP and are acknowledged as intentional scope decisions:
+
+| Limitation | Impact | Future Fix |
+|------------|--------|------------|
+| No authentication | Any user can access any endpoint | Add JWT middleware before production |
+| Reminder trigger is manual | Staff must call `POST /api/reminders/run` | Replace with a scheduled cron job |
+| No real notifications sent | Reminders are logged only, not emailed or texted | Integrate SendGrid or Twilio |
+| Waitlist notifies one entry per cancellation | Only the oldest match is notified | Batch-notify all matches or add a queue |
+| No pagination on list endpoints | Large datasets could slow responses | Add `limit`/`offset` query params |
+| Single provider per appointment | No multi-provider scheduling support | Extend schema with provider table |
+
+## Deployment and Setup
+
+### Prerequisites
+- Node.js 18+
+- Docker Desktop (for PostgreSQL via Docker Compose)
+
+### Local Setup
+
+```bash
+# 1. Start the database
+docker-compose up -d
+
+# 2. Install backend dependencies
+cd backend
+npm install
+
+# 3. Apply database migrations and generate Prisma client
+npx prisma migrate dev
+npx prisma generate
+
+# 4. Seed sample data
+npm run prisma:seed
+
+# 5. Start the backend server
+npm run dev
+
+# 6. In a separate terminal, start the frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+### Environment Variables
+
+Copy `.env.example` to `backend/.env` and set:
+
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smart_clinic
+PORT=3001
+```
+
+### Running Tests
+
+```bash
+cd backend
+
+# Unit tests
+npm run test:unit
+
+# Property-based tests
+npm run test:properties
+
+# All tests
+npm test
+```
+
 ## Architecture
 
 ```mermaid
