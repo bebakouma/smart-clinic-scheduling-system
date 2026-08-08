@@ -565,6 +565,98 @@ A future enhancement could collect basic symptom or reason information from pati
 
 **This feature is out of scope for the current MVP.** The existing `IntakeForm` model provides the foundation for this enhancement without schema changes to other models.
 
+## Security Test Plan
+
+This section outlines the security test strategy for the Smart Clinic Scheduling System. While the MVP does not implement authentication, this plan identifies testable security properties and defines how they connect to the system design.
+
+### Test Categories
+
+#### 1. Input Validation Tests
+
+These tests verify that all API endpoints reject malformed, oversized, or malicious input.
+
+| Test Case | Endpoint | Expected Behavior | Priority |
+|-----------|----------|-------------------|----------|
+| SQL injection in patient name | POST /api/patients | Rejected by Joi; Prisma parameterizes queries | High |
+| XSS payload in notes field | POST /api/appointments | Stored as plain text, never rendered as HTML | Medium |
+| Oversized request body | All POST/PUT endpoints | Rejected by Express body size limit | Medium |
+| Invalid date formats | POST /api/appointments | Rejected by Joi `date.iso()` validation | High |
+| Negative IDs in URL params | GET /api/patients/-1 | Returns 404, no crash or stack trace | Medium |
+| Empty required fields | POST /api/patients | Returns 400 with field-level error details | High |
+| Invalid status values | PATCH /api/appointments/:id/status | Rejected by service-layer enum check | High |
+
+**Current coverage**: Joi validation schemas on all endpoints already handle these cases. Unit tests for validators confirm rejection of invalid input.
+
+#### 2. Role-Based Access Control Tests (Planned)
+
+These tests will verify access restrictions once JWT authentication is implemented.
+
+| Test Case | Expected Behavior | Status |
+|-----------|-------------------|--------|
+| Unauthenticated request to protected endpoint | 401 Unauthorized | Planned |
+| Staff role accessing patient records | 200 OK (allowed) | Planned |
+| Read-only role attempting to create a patient | 403 Forbidden | Planned |
+| Expired JWT token | 401 Unauthorized with "token expired" message | Planned |
+| Tampered JWT signature | 401 Unauthorized | Planned |
+| Role escalation attempt (modify own role claim) | 401/403 Rejected | Planned |
+
+#### 3. Patient Data Privacy Tests
+
+| Test Case | Expected Behavior | Priority |
+|-----------|-------------------|----------|
+| Error responses do not leak patient PII | Error messages contain only generic text | High |
+| Server logs do not contain request bodies | Logs contain route/status only, no PII | Medium |
+| Database connection uses SSL in production | `DATABASE_URL` includes `sslmode=require` | High |
+| API responses exclude fields not needed by role | Future: field-level filtering per role | Planned |
+
+**Current coverage**: The error handler returns generic messages and logs internal details server-side only. Confirmed by error handling unit tests.
+
+#### 4. API Endpoint Behavior Tests
+
+| Test Case | Expected Behavior | Priority |
+|-----------|-------------------|----------|
+| CORS rejects requests from unknown origins | Response has no `Access-Control-Allow-Origin` for unknown domains | Medium |
+| Large batch requests do not crash server | Server returns response within timeout, no memory leak | Low |
+| Concurrent updates to same appointment | Last write wins, no data corruption | Medium |
+| Accessing deleted resources | Returns 404, no stack trace | High |
+| HTTP methods not supported on endpoint | Returns 405 Method Not Allowed | Low |
+
+**Current coverage**: CORS is configured in `app.js`. Not-found errors are handled by service-layer checks.
+
+#### 5. Dependency Risk Assessment
+
+| Dependency | Risk | Mitigation |
+|------------|------|------------|
+| `express` (v4.21) | Well-maintained, low risk | Pin version, monitor advisories |
+| `@prisma/client` (v5.20) | ORM parameterizes all queries — prevents SQL injection | Pin version |
+| `joi` (v17.13) | Input validation library, no known vulnerabilities | Pin version |
+| `cors` (v2.8) | Minimal surface area | Pin version, restrict origins in production |
+| `dotenv` (v16.4) | Reads .env files, no network access | Low risk |
+| `jsonwebtoken` (future) | Token verification — critical for auth | Use RS256 algorithm, validate claims |
+
+**Mitigation strategy**: Use `npm audit` regularly, pin exact versions in `package-lock.json`, and update only after reviewing changelogs.
+
+### Security Test Execution Plan
+
+| Phase | When | What |
+|-------|------|------|
+| Phase 1 (Current) | During development | Input validation via Joi schemas + unit tests |
+| Phase 2 (Next) | After auth implementation | RBAC tests, JWT validation, token expiry |
+| Phase 3 (Pre-production) | Before deployment | `npm audit`, CORS lockdown, SSL verification |
+| Phase 4 (Ongoing) | Post-deployment | Dependency monitoring, log review, penetration testing |
+
+### Connection to Design Risk Matrix
+
+Each entry in the Security Risk Matrix maps to a test category:
+
+| Risk | Test Category | Current Status |
+|------|---------------|----------------|
+| Unauthorized access to patient records | RBAC Tests (#2) | Planned (no auth yet) |
+| SQL injection | Input Validation Tests (#1) | ✅ Mitigated by Prisma ORM |
+| Sensitive data in logs | Patient Data Privacy Tests (#3) | ✅ Error handler verified |
+| Brute force on auth endpoints | RBAC Tests (#2) | Planned (rate limiting) |
+| Insecure direct object reference | API Endpoint Behavior Tests (#4) | Partial (service-layer checks) |
+
 ## Error Handling
 
 ### Validation Errors (400)
