@@ -657,6 +657,141 @@ Each entry in the Security Risk Matrix maps to a test category:
 | Brute force on auth endpoints | RBAC Tests (#2) | Planned (rate limiting) |
 | Insecure direct object reference | API Endpoint Behavior Tests (#4) | Partial (service-layer checks) |
 
+## Authentication and Role-Based Access Design
+
+This section defines the authentication and authorization architecture planned for production deployment. The MVP currently operates without authentication to focus on scheduling logic correctness.
+
+### User Roles
+
+| Role | Description | Intended Users |
+|------|-------------|----------------|
+| Admin | Full system access including user management, configuration, and audit logs | Clinic owner, IT administrator |
+| Staff | Create and manage patients, appointments, waitlist, intake forms, and reminders | Front desk receptionist, scheduling coordinator |
+| Provider | View own schedule, update appointment status, view patient intake forms | Doctors, nurses, specialists |
+| Read-Only | View dashboard and appointment calendar only | Front desk display, reporting |
+
+### Role-Permission Matrix
+
+| Endpoint | Admin | Staff | Provider | Read-Only |
+|----------|-------|-------|----------|-----------|
+| GET /api/patients | ✅ | ✅ | ✅ (own patients) | ❌ |
+| POST /api/patients | ✅ | ✅ | ❌ | ❌ |
+| PUT /api/patients/:id | ✅ | ✅ | ❌ | ❌ |
+| DELETE /api/patients/:id | ✅ | ❌ | ❌ | ❌ |
+| GET /api/appointments | ✅ | ✅ | ✅ (own schedule) | ✅ |
+| POST /api/appointments | ✅ | ✅ | ❌ | ❌ |
+| PATCH /api/appointments/:id/status | ✅ | ✅ | ✅ (own) | ❌ |
+| POST /api/appointments/:id/reschedule | ✅ | ✅ | ❌ | ❌ |
+| GET /api/waitlist | ✅ | ✅ | ❌ | ❌ |
+| POST /api/waitlist | ✅ | ✅ | ❌ | ❌ |
+| GET /api/reminders/logs | ✅ | ✅ | ❌ | ❌ |
+| POST /api/reminders/run | ✅ | ❌ | ❌ | ❌ |
+| GET /api/intake/:appointmentId | ✅ | ✅ | ✅ (own) | ❌ |
+| POST /api/intake | ✅ | ✅ | ❌ | ❌ |
+| GET /api/dashboard/* | ✅ | ✅ | ✅ | ✅ |
+
+### Authentication Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant API
+    participant AuthMiddleware
+    participant Controller
+    participant DB
+
+    User->>Frontend: Enter email + password
+    Frontend->>API: POST /api/auth/login { email, password }
+    API->>DB: Find user by email, verify bcrypt hash
+    DB-->>API: User record
+    API->>API: Generate JWT (userId, role, exp: 8h)
+    API-->>Frontend: { token, user: { id, name, role } }
+    Frontend->>Frontend: Store token in memory/localStorage
+
+    Note over Frontend,API: Subsequent requests include token
+
+    Frontend->>API: GET /api/patients (Authorization: Bearer <token>)
+    API->>AuthMiddleware: Verify JWT signature + expiry
+    AuthMiddleware->>AuthMiddleware: Extract role from claims
+    AuthMiddleware->>Controller: Attach user context (userId, role)
+    Controller->>Controller: Check role permission
+    alt Authorized
+        Controller-->>Frontend: 200 OK with data
+    else Unauthorized
+        Controller-->>Frontend: 403 Forbidden
+    end
+```
+
+### JWT Token Design
+
+| Claim | Value | Purpose |
+|-------|-------|---------|
+| `sub` | User ID (integer) | Identify the authenticated user |
+| `role` | admin / staff / provider / readonly | Determine access level |
+| `name` | Display name | Frontend display without DB lookup |
+| `iat` | Issue timestamp | Token freshness |
+| `exp` | Issue + 8 hours | Auto-expiry for security |
+
+**Algorithm**: RS256 (asymmetric) — private key signs tokens, public key verifies them. This allows services to verify tokens without access to the signing key.
+
+### Protected Endpoints Design
+
+Middleware is inserted between routes and controllers:
+
+```javascript
+// Example route with auth + role check
+router.get('/api/patients',
+  authMiddleware,          // Verify JWT, attach req.user
+  requireRole(['admin', 'staff', 'provider']),  // Check role
+  patientsController.getAll
+);
+```
+
+**Middleware chain**:
+1. `authMiddleware` — Extracts Bearer token, verifies JWT signature and expiry, attaches `req.user = { id, role, name }`
+2. `requireRole(allowedRoles)` — Checks `req.user.role` against allowed list, returns 403 if not permitted
+3. `ownershipCheck` (optional) — For provider role, ensures they can only access their own schedule
+
+### Patient Data Privacy Rules
+
+| Rule | Implementation |
+|------|----------------|
+| PII never in logs | Middleware strips request body from log output |
+| Role-based field filtering | Provider role does not see patient phone/email unless their own patient |
+| Encrypted at rest | PostgreSQL with disk-level encryption in production |
+| Encrypted in transit | HTTPS-only with HSTS header |
+| Session timeout | JWT expires after 8 hours, no refresh token in MVP |
+| Password storage | bcrypt with cost factor 12 |
+
+### Security Test Cases for Access Control
+
+| ID | Test Case | Steps | Expected Result |
+|----|-----------|-------|-----------------|
+| AC-01 | Valid login | POST /api/auth/login with correct credentials | 200 + JWT token |
+| AC-02 | Invalid password | POST /api/auth/login with wrong password | 401 Unauthorized |
+| AC-03 | Missing token | GET /api/patients with no Authorization header | 401 Unauthorized |
+| AC-04 | Expired token | GET /api/patients with expired JWT | 401 "Token expired" |
+| AC-05 | Tampered token | GET /api/patients with modified JWT payload | 401 "Invalid token" |
+| AC-06 | Staff creates patient | POST /api/patients as staff role | 201 Created |
+| AC-07 | Provider creates patient | POST /api/patients as provider role | 403 Forbidden |
+| AC-08 | Read-only views dashboard | GET /api/dashboard/summary as readonly role | 200 OK |
+| AC-09 | Read-only creates appointment | POST /api/appointments as readonly role | 403 Forbidden |
+| AC-10 | Provider views own schedule only | GET /api/appointments as provider role | 200 (filtered to own) |
+| AC-11 | Admin deletes patient | DELETE /api/patients/:id as admin | 200 OK |
+| AC-12 | Staff deletes patient | DELETE /api/patients/:id as staff | 403 Forbidden |
+
+### Implementation Roadmap
+
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| 1. Design (current) | Define roles, permissions, token structure, test cases | ✅ Complete |
+| 2. User model | Add `User` table with email, password_hash, role fields | Planned |
+| 3. Auth endpoints | POST /api/auth/login, POST /api/auth/register (admin only) | Planned |
+| 4. Middleware | authMiddleware + requireRole middleware functions | Planned |
+| 5. Route protection | Apply middleware to all existing routes | Planned |
+| 6. Test execution | Run AC-01 through AC-12 test cases | Planned |
+
 ## Error Handling
 
 ### Validation Errors (400)
