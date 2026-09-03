@@ -177,7 +177,7 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
     - Update `appointments.service.js` to call `waitlist.service.processCancellation()` when an appointment is cancelled
     - _Requirements: 4.2, 7.2, 7.3_
 
-  - [ ] 6.3 Write property tests for Waitlist module
+  - [x] 6.3 Write property tests for Waitlist module
     - **Property 7: Cancellation sets status and triggers waitlist**
     - **Validates: Requirements 4.1, 4.2, 7.3**
     - **Property 11: Waitlist entry creation defaults to waiting**

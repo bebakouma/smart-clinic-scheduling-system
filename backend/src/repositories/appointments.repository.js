@@ -45,7 +45,7 @@ async function remove(id) {
 async function findConflict(providerName, windowStart, windowEnd, excludeId = null) {
   const where = {
     provider_name: providerName,
-    status: { notIn: ['cancelled'] },
+    status: { notIn: ['cancelled', 'no_show'] },
     appointment_datetime: { gte: windowStart, lte: windowEnd }
   };
   if (excludeId) where.id = { not: excludeId };
