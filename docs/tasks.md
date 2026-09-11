@@ -196,7 +196,7 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
     - `backend/src/routes/reminders.routes.js` — wire GET, POST endpoints
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ] 7.2 Write property tests for Reminder module
+  - [x] 7.2 Write property tests for Reminder module
     - **Property 9: Reminder eligibility filtering**
     - **Validates: Requirements 6.1, 6.3**
     - **Property 10: Reminder log completeness**
