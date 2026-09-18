@@ -208,7 +208,7 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
     - Test duplicate reminder prevention
     - _Requirements: 6.1, 6.3_
 
-- [ ] 8. Implement Intake module
+- [x] 8. Implement Intake module
   - [x] 8.1 Create intake repository, service, validator, controller, and routes
     - `backend/src/repositories/intake.repository.js` — Prisma CRUD
     - `backend/src/services/intake.service.js` — validate appointment exists, link to patient
@@ -217,11 +217,11 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
     - `backend/src/routes/intake.routes.js` — wire GET, POST, PUT endpoints
     - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-  - [ ] 8.2 Write property tests for Intake module
+  - [x] 8.2 Write property tests for Intake module
     - **Property 13: Intake form round-trip**
     - **Validates: Requirements 8.1, 8.2**
 
-  - [ ] 8.3 Write unit tests for Intake service
+  - [x] 8.3 Write unit tests for Intake service
     - Test appointment existence validation
     - Test intake form creation and retrieval
     - _Requirements: 8.1, 8.4_
