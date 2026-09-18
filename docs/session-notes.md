@@ -93,3 +93,32 @@ Each week the user posts: what was accomplished this week + what is planned next
 ## How to Resume in a New Session
 
 Say: "continue with smart-clinic-scheduling" and reference this file (`docs/session-notes.md`). Then pick the current week's task from the schedule.
+
+---
+
+## Known Issues / Backlog (saved for later or for a "fix a bug" assignment)
+
+These are real, verified items. Good candidates if a future assignment asks for a code correction (like the Topic 1 Loom video). Otherwise, fix opportunistically.
+
+### 1. Aged-out date tests in appointments.service.test.js (4 failing tests)
+- **What:** The `reschedule` and `create` unit tests use hardcoded dates like `2026-07-01` and `2026-07-15`. The system date is now September 2026, so those dates are in the past. The service correctly rejects past dates, so the tests fail — and two "conflict" tests fail because the past-date check throws before the conflict check is reached.
+- **Root cause:** Fixed future dates in the test fixtures that have since become past dates. This is a test-fixture problem, not a product bug.
+- **Fix:** Replace the hardcoded dates with dynamic future dates, e.g. `new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()`.
+- **Files:** `backend/tests/unit/appointments.service.test.js` (the `reschedule` and `create` describe blocks).
+- **Status:** OPEN. Isolated to the appointments unit test file; does not affect other suites.
+
+### 2. Watch for stray keystroke corruption
+- On the task-8 branch, an accidental `+AMv` string had been saved into `appointments.repository.js` line 49. It was reverted before committing. Not a recurring issue, just a note to sanity-check `git diff` before committing.
+
+## Progress Log
+
+- Topic 1 (Week 1): Fixed no_show provider-conflict bug (Loom video). Merged (PR #12).
+- Topic 2 (Week 2): Task 6.3 waitlist property tests. Merged.
+- Topic 3 (Week 3): Task 7.2 reminder property tests. Merged.
+- Topic 4 (Week 4): Task 8.2 + 8.3 intake property/unit tests. Pushed on branch `task-8-intake-tests`.
+
+## Remaining MVP test debt (then on to security)
+
+- Task 9.2 — Dashboard property tests (Property 12) — NEXT
+- Task 11.1 — Serialization property tests (Property 14, 15)
+- After that, MVP test debt is cleared → Task 16 (auth foundation) begins the real security work.
