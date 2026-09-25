@@ -226,22 +226,22 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
     - Test intake form creation and retrieval
     - _Requirements: 8.1, 8.4_
 
-- [ ] 9. Implement Dashboard module
+- [x] 9. Implement Dashboard module
   - [x] 9.1 Create dashboard service, controller, and routes
     - `backend/src/services/dashboard.service.js` — aggregate counts: today's appointments, upcoming, cancelled, no-shows, active waitlist
     - `backend/src/controllers/dashboard.controller.js` — request handling
     - `backend/src/routes/dashboard.routes.js` — wire GET endpoints
     - _Requirements: 9.1, 9.2, 9.3_
 
-  - [ ] 9.2 Write property tests for Dashboard module
+  - [x] 9.2 Write property tests for Dashboard module
     - **Property 12: Dashboard summary accuracy**
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
-- [ ] 10. Checkpoint - Ensure all backend modules work
+- [x] 10. Checkpoint - Ensure all backend modules work
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Write serialization property tests
-  - [ ] 11.1 Write property tests for API envelope and serialization
+- [x] 11. Write serialization property tests
+  - [x] 11.1 Write property tests for API envelope and serialization
     - **Property 14: API response envelope consistency**
     - **Validates: Requirements 11.1, 11.2**
     - **Property 15: Domain object JSON serialization round-trip**
