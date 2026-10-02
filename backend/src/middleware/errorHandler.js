@@ -28,6 +28,15 @@ function errorHandler(err, req, res, next) {
     });
   }
 
+  if (err.type === 'unauthorized') {
+    return res.status(401).json({
+      error: {
+        message: err.message || 'Unauthorized',
+        details: null
+      }
+    });
+  }
+
   return res.status(500).json({
     error: {
       message: 'Internal server error',

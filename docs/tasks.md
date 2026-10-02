@@ -301,7 +301,7 @@ Execution waves (each wave depends on the previous; tasks within a wave may proc
 
 Harden the application: authentication, authorization, defensive programming, and security testing. Builds on the completed MVP.
 
-- [ ] 16. Implement authentication foundation
+- [x] 16. Implement authentication foundation
   - Add `User` model to `backend/prisma/schema.prisma` (id, email, password_hash, role, name, created_at, updated_at) and run migration
   - Create `backend/src/repositories/users.repository.js` — Prisma CRUD for users
   - Create `backend/src/services/auth.service.js` — register (hash password with bcrypt), login (verify password, issue JWT)

@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          String   @default("staff")
+  name          String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
 model Patient {
   id                     Int       @id @default(autoincrement())
   first_name             String

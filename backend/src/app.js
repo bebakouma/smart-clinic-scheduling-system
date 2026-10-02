@@ -9,6 +9,7 @@ const waitlistRoutes = require('./routes/waitlist.routes');
 const intakeRoutes = require('./routes/intake.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/reminders', remindersRoutes);
