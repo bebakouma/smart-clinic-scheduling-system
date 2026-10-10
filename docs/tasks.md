@@ -310,7 +310,7 @@ Harden the application: authentication, authorization, defensive programming, an
   - Write unit tests for auth service (password hashing, login success/failure, token issuance)
   - _Requirements: Security design — Authentication_
 
-- [ ] 17. Wire authentication and RBAC to all routes
+- [x] 17. Wire authentication and RBAC to all routes
   - Apply `authMiddleware` (JWT verify) to all `/api/*` routes except auth endpoints
   - Apply `requireRole` per the role-permission matrix (Admin, Staff, Provider, Read-Only)
   - Update frontend `api.js` to attach the JWT token and add a login page
