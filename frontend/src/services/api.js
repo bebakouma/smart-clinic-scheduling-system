@@ -1,9 +1,23 @@
 const API_BASE = '/api';
+const TOKEN_KEY = 'clinic_token';
+
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token) {
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+}
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const token = getToken();
   const config = {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
     ...options
   };
 
@@ -19,6 +33,19 @@ async function request(endpoint, options = {}) {
 
   return json.data;
 }
+
+export const authService = {
+  login: async (email, password) => {
+    const data = await request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    setToken(data.token);
+    return data;
+  },
+  logout: () => setToken(null),
+  isAuthenticated: () => !!getToken()
+};
 
 export const patientService = {
   getAll: (queryString = '') => request(`/patients${queryString}`),
