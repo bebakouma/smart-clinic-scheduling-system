@@ -317,7 +317,7 @@ Harden the application: authentication, authorization, defensive programming, an
   - Write integration tests confirming protected routes reject unauthenticated/unauthorized requests
   - _Requirements: Security design — RBAC, Role-Permission Matrix_
 
-- [ ] 18. Security hardening (defensive programming)
+- [x] 18. Security hardening (defensive programming)
   - Add `express-rate-limit` on `/api/*` routes
   - Restrict CORS `allowedOrigins` to the known frontend domain via env config
   - Add request body size limits
