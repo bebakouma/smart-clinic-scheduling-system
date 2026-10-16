@@ -93,3 +93,72 @@ Each week the user posts: what was accomplished this week + what is planned next
 ## How to Resume in a New Session
 
 Say: "continue with smart-clinic-scheduling" and reference this file (`docs/session-notes.md`). Then pick the current week's task from the schedule.
+
+---
+
+## SESSION UPDATE — End of SWE-550 (Security course complete)
+
+### What was accomplished across the SWE-550 course
+
+All work followed the same flow: branch per task, implement, run tests, check off in tasks.md, commit, push. User opens and merges each PR manually.
+
+| Topic/Week | Task | Branch | Status |
+|------------|------|--------|--------|
+| 1 (DQ2) | no_show provider-conflict bug fix (Loom video) | fix/no-show-conflict | Merged (PR #12) |
+| 2 | 6.3 Waitlist property tests | task-7.2... (waitlist) | Merged |
+| 3 | 7.2 Reminder property tests | task-7.2-reminder-property-tests | Merged |
+| 4 | 8.2 + 8.3 Intake property + unit tests | task-8-intake-tests | Merged |
+| 5 | 9.2 + 11.1 Dashboard + serialization property tests | task-9-11-dashboard-serialization-tests | Merged |
+| 6 | 16 Auth foundation (User model, bcrypt, register/login, JWT) | task-16-auth-foundation | Pushed (PR open) |
+| 7 | 17 Wire auth + RBAC to all routes | task-17-auth-rbac-routes | Pushed (PR open) |
+| 7 (final) | 18 Security hardening (rate limit, CORS, body limit, PII-safe logging) | task-18-security-hardening | Pushed (PR open) |
+
+MVP test debt is fully cleared (tasks 6.3, 7.2, 8.2, 8.3, 9.2, 11.1 all done).
+Authentication, RBAC, and hardening are all implemented.
+
+### IMPORTANT: Branch merge order
+Tasks 16 → 17 → 18 chain on top of each other (each branch was created from the previous).
+Merge their PRs in order: 16 first, then 17, then 18. After merging, main will contain all three.
+
+### Known Issues still OPEN
+1. **4 aged-out date tests in `backend/tests/unit/appointments.service.test.js`** — hardcoded dates like `2026-07-01`/`2026-08-01` are now in the past, so the service correctly rejects them and the tests fail. Fix: replace with dynamic future dates (`new Date(Date.now() + 14*24*60*60*1000).toISOString()`). Good candidate for a future "fix a bug" assignment, or quick cleanup. NOT related to any recent task.
+
+### Follow-up needed before running live
+- Prisma migration for the new `User` model has NOT been run (only `prisma generate`). Run `npx prisma migrate dev` when setting up the DB. This is part of real deployment, not a test task.
+
+## NEXT SESSION STARTS HERE — SWE-570 (IoT & Embedded), starts Oct 22
+
+**First task of the new course: Task 19** (it carries over from the security backlog — it was NOT done in SWE-550).
+
+- **Task 19 — Security test suite:** RBAC tests (401/403), JWT expiry/tamper tests, PII-leak tests (no patient data in responses/logs), input-validation security tests (SQL injection, XSS payload, oversized body, invalid IDs), and run `npm audit` with a dependency risk review.
+
+### Remaining tasks to the end of the program
+
+**SWE-570 — IoT & Embedded (Tasks 19–27)**
+- 19 — Security test suite (carryover; first task of this course)
+- 20 — Real notification integration (SendGrid/Twilio), replace simulated reminders
+- 21 — Scheduled reminder job (node-cron)
+- 22 — Patient check-in endpoint + checked_in state (schema migration)
+- 23 — Check-in kiosk UI (frontend)
+- 24 — Simulated IoT check-in device (standalone script, HTTP/MQTT)
+- 25 — Real-time dashboard updates (WebSocket/polling)
+- 26 — IoT security (device token/API key, TLS)
+- 27 — IoT integration tests + demo
+
+**SWE-590 — Capstone / Deploy & Present (Tasks 28–35)**
+- 28 — Deployment setup (host + managed PostgreSQL, prod config)
+- 29 — Deploy backend + database live (HTTPS, secrets, migrations)
+- 30 — Deploy frontend live, wired to prod API
+- 31 — Production hardening (monitoring, smoke tests)
+- 32 — Smart feature: predictive no-show detection OR smart triage
+- 33 — Full end-to-end testing against live environment
+- 34 — Capstone documentation (report + demo script)
+- 35 — Capstone presentation + final submission
+
+### Weekly post pattern
+Each week: "Last week I did Task X... This week I plan Task Y (next number)... No major blockers." Include task numbers and property names. Keep it natural, short, no big words.
+
+### Open decisions (confirm closer to their week)
+1. IoT feature: patient self check-in kiosk + real reminders (recommended).
+2. Capstone smart feature: predictive no-show detection (recommended).
+3. Deployment target: managed container platform (Render/Railway/Fly.io) + managed PostgreSQL (recommended).
