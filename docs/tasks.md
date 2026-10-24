@@ -324,12 +324,16 @@ Harden the application: authentication, authorization, defensive programming, an
   - Ensure logs never contain patient PII or request bodies
   - _Requirements: Security design — API Security Controls_
 
-- [ ] 19. Security test suite
+- [x] 19. Security test suite
   - RBAC tests: unauthenticated (401), wrong role (403), expired token, tampered signature
   - PII-leak tests: error responses and logs contain no patient data
   - Input-validation security tests: SQL injection, XSS payload, oversized body, invalid IDs
   - Run `npm audit` and document dependency risk review
   - _Requirements: Security Test Plan (design.md)_
+  - Added `tests/integration/security.jwt.test.js` (expired/tampered/forged tokens, malformed headers)
+  - Added `tests/integration/security.pii.test.js` (generic 500s, no stack/PII in responses, no body in logs, no password hash)
+  - Added `tests/integration/security.input-validation.test.js` (injection in params, XSS payload, invalid IDs, oversized body)
+  - Documented the `npm audit` dependency risk review in `docs/security-audit.md`
 
 ---
 
