@@ -14,8 +14,16 @@ jest.mock('../../src/config/database', () => ({
 const { prisma } = require('../../src/config/database');
 
 describe('Reminders Service - Property Tests', () => {
+  let logSpy;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Silence the console provider's dev-mode logging so property runs stay quiet.
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    if (logSpy) logSpy.mockRestore();
   });
 
   const apptType = () => fc.constantFrom('checkup', 'consultation', 'follow_up', 'procedure');
