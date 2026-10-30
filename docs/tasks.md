@@ -341,11 +341,16 @@ Harden the application: authentication, authorization, defensive programming, an
 
 Extend the secured application with a real notification pipeline, patient self check-in, and a simulated IoT device with real-time dashboard updates.
 
-- [ ] 20. Real notification integration
+- [x] 20. Real notification integration
   - Integrate an email/SMS provider (SendGrid or Twilio) behind a notification service abstraction
   - Replace the simulated reminder send with real delivery; record provider status in `ReminderLog`
   - Keep a test/dev mode that logs instead of sending
   - _Requirements: Future enhancement — real notifications_
+  - Added `src/services/notifications/notification.service.js` (provider abstraction, env-driven selection, console fallback)
+  - Added providers: `console.provider.js` (dev/test default, logs only), `sendgrid.provider.js` (email), `twilio.provider.js` (SMS)
+  - Wired `reminders.service.js` to deliver via the notification service and record the returned provider status in `ReminderLog`
+  - Added env vars to `.env.example` (`NOTIFICATION_PROVIDER`, SendGrid/Twilio keys) and optional deps `@sendgrid/mail`, `twilio`
+  - Added `tests/unit/notification.service.test.js`; email-first, SMS adapter ready for rollout
 
 - [ ] 21. Scheduled reminder job
   - Add a scheduled job (node-cron) that runs the reminder process automatically on an interval

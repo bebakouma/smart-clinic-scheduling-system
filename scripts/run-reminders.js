@@ -5,9 +5,9 @@ async function main() {
   console.log('Running reminder check...');
   try {
     const results = await remindersService.runReminders();
-    console.log(`Sent ${results.length} reminders`);
+    console.log(`Processed ${results.length} reminders`);
     results.forEach(r => {
-      console.log(`  - Reminder for appointment ${r.appointment_id}: ${r.message}`);
+      console.log(`  - Appointment ${r.appointment_id} [${r.reminder_type}] status=${r.status}`);
     });
   } catch (err) {
     console.error('Error running reminders:', err.message);
