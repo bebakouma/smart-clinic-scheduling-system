@@ -352,10 +352,16 @@ Extend the secured application with a real notification pipeline, patient self c
   - Added env vars to `.env.example` (`NOTIFICATION_PROVIDER`, SendGrid/Twilio keys) and optional deps `@sendgrid/mail`, `twilio`
   - Added `tests/unit/notification.service.test.js`; email-first, SMS adapter ready for rollout
 
-- [ ] 21. Scheduled reminder job
+- [x] 21. Scheduled reminder job
   - Add a scheduled job (node-cron) that runs the reminder process automatically on an interval
   - Make interval and enable/disable configurable via env
   - _Requirements: Known limitation — manual reminder trigger_
+  - Added `src/services/reminders.scheduler.js`: node-cron job, default `*/15 * * * *`, env-configurable interval and enable/disable
+  - Non-overlapping execution guard so a new run is skipped while the previous run is still in progress
+  - Preserves the existing data-level duplicate guard (skip appointments that already have a reminder log)
+  - Wired into `server.js` startup; added `REMINDER_JOB_ENABLED` and `REMINDER_CRON` to `.env.example`
+  - Added `tests/unit/reminders.scheduler.test.js` (config, non-overlap guard, error-release)
+  - Follow-up noted: DB-level unique constraint on `ReminderLog.appointment_id` for multi-process safety
 
 - [ ] 22. Patient check-in endpoint
   - Add a `checked_in` state and `checked_in_at` to the `Appointment` model; run migration
