@@ -363,11 +363,16 @@ Extend the secured application with a real notification pipeline, patient self c
   - Added `tests/unit/reminders.scheduler.test.js` (config, non-overlap guard, error-release)
   - Follow-up noted: DB-level unique constraint on `ReminderLog.appointment_id` for multi-process safety
 
-- [ ] 22. Patient check-in endpoint
+- [x] 22. Patient check-in endpoint
   - Add a `checked_in` state and `checked_in_at` to the `Appointment` model; run migration
   - Create `POST /api/checkin` (by appointment or confirmation code) that transitions the appointment to checked-in
   - Write unit tests for check-in rules (only valid, non-terminal appointments can check in)
   - _Requirements: IoT feature — self check-in_
+  - Schema: added `checked_in` (Boolean, default false), `checked_in_at` (DateTime?), and `confirmation_code` (unique) to `Appointment`; regenerated Prisma client (run `prisma migrate dev` at deployment)
+  - Added `appointments.service.checkIn()` — lookup by appointmentId or confirmationCode; rejects terminal/no_show and already-checked-in; sets `status='checked_in'`, `checked_in=true`, `checked_in_at=now`
+  - Added `checkinSchema` validator, `findByConfirmationCode` repo method, `POST /api/checkin` route (staff-managed: `requireRole(['admin','staff'])`)
+  - Added `tests/unit/checkin.service.test.js` (10) and `tests/integration/checkin.endpoint.test.js` (6: 401/403/400/200/409/404)
+  - Staff-managed check-in now; patient self check-in via kiosk/IoT device comes in Tasks 23-26 (will use device auth)
 
 - [ ] 23. Check-in kiosk UI
   - Create a tablet-style kiosk page in the frontend for patient self check-in

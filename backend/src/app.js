@@ -11,6 +11,7 @@ const intakeRoutes = require('./routes/intake.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const authRoutes = require('./routes/auth.routes');
+const checkinRoutes = require('./routes/checkin.routes');
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/intake', intakeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/checkin', checkinRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

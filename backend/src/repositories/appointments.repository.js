@@ -23,6 +23,13 @@ async function findById(id) {
   });
 }
 
+async function findByConfirmationCode(confirmationCode) {
+  return prisma.appointment.findUnique({
+    where: { confirmation_code: confirmationCode },
+    include: { patient: true }
+  });
+}
+
 async function create(data) {
   return prisma.appointment.create({
     data,
@@ -52,4 +59,4 @@ async function findConflict(providerName, windowStart, windowEnd, excludeId = nu
   return prisma.appointment.findFirst({ where });
 }
 
-module.exports = { findAll, findById, create, update, remove, findConflict };
+module.exports = { findAll, findById, findByConfirmationCode, create, update, remove, findConflict };

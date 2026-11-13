@@ -42,6 +42,9 @@ model Appointment {
   appointment_datetime   DateTime
   status                 String    @default("scheduled")
   confirmation_status    String?
+  confirmation_code      String?   @unique
+  checked_in             Boolean   @default(false)
+  checked_in_at          DateTime?
   notes                  String?
   created_at             DateTime  @default(now())
   updated_at             DateTime  @updatedAt
