@@ -65,4 +65,14 @@ async function remove(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove };
+async function checkIn(req, res, next) {
+  try {
+    const appointment = await appointmentsService.checkIn({
+      appointmentId: req.body.appointmentId,
+      confirmationCode: req.body.confirmationCode
+    });
+    success(res, appointment);
+  } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, checkIn };

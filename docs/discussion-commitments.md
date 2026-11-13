@@ -69,6 +69,22 @@ backend, then test the reminder process.
 
 ---
 
+## Task 22 — Patient check-in endpoint  [DONE]
+
+### Q (Prof. Hatim Alzoubi): For Task 22, will the checked-in status be set only by staff, or will patients also be able to trigger it themselves?
+**My answer:** Starting with staff-managed check-in (authorized clinic staff update
+an appointment to checked-in when a patient arrives). Patient self check-in via a
+kiosk / tablet (possibly a Raspberry Pi) comes later, with the system verifying the
+appointment before updating its status. Focus first on the basic endpoint, tested.
+
+**Commitments / implications (status):**
+1. ✅ Staff-managed first — `POST /api/checkin` is protected by `requireRole(['admin','staff'])`.
+2. ✅ Verify the appointment before updating — check-in rejects not-found, terminal (cancelled/completed), no_show, and already-checked-in states.
+3. ⏳ Patient self check-in (kiosk/tablet, possibly Raspberry Pi) deferred to Tasks 23-26. Note to self: the IoT device in Task 24 is a *software simulator* first; a Raspberry Pi is the hardware target if taken further — do not overcommit to hardware.
+4. ⏳ When self check-in is added, device/kiosk requests must authenticate (device token/API key) per Task 26 — the current endpoint is staff-JWT only.
+
+---
+
 ## Notes
 
 - Keep this file updated after each weekly discussion exchange.

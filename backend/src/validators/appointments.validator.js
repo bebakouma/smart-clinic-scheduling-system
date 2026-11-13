@@ -16,12 +16,17 @@ const updateSchema = Joi.object({
 }).min(1);
 
 const statusSchema = Joi.object({
-  status: Joi.string().valid('scheduled', 'confirmed', 'cancelled', 'completed', 'no_show').required()
+  status: Joi.string().valid('scheduled', 'confirmed', 'checked_in', 'cancelled', 'completed', 'no_show').required()
 });
+
+const checkinSchema = Joi.object({
+  appointmentId: Joi.number().integer().positive(),
+  confirmationCode: Joi.string().trim().min(1)
+}).or('appointmentId', 'confirmationCode');
 
 const rescheduleSchema = Joi.object({
   appointment_datetime: Joi.date().iso().required(),
   reason: Joi.string().trim().allow(null, '').optional()
 });
 
-module.exports = { createSchema, updateSchema, statusSchema, rescheduleSchema };
+module.exports = { createSchema, updateSchema, statusSchema, rescheduleSchema, checkinSchema };

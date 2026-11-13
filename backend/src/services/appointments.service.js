@@ -1,7 +1,7 @@
 const appointmentsRepo = require('../repositories/appointments.repository');
 const patientsRepo = require('../repositories/patients.repository');
 
-const VALID_STATUSES = ['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show'];
+const VALID_STATUSES = ['scheduled', 'confirmed', 'checked_in', 'cancelled', 'completed', 'no_show'];
 const TERMINAL_STATUSES = ['cancelled', 'completed'];
 
 async function getAll(filters) {
@@ -174,4 +174,60 @@ async function remove(id) {
   return appointmentsRepo.remove(id);
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, VALID_STATUSES };
+/**
+ * Check a patient in for their appointment.
+ *
+ * Lookup is by appointment id or by confirmation code (one is required).
+ * Check-in rules:
+ *   - the appointment must exist
+ *   - it must not be in a terminal state (cancelled / completed / no_show)
+ *   - checking in again is rejected (already checked in)
+ *
+ * On success the appointment is marked checked_in with a checked_in_at
+ * timestamp. This is the backend the staff action and the future kiosk / IoT
+ * device both call.
+ *
+ * @param {object} params
+ * @param {number} [params.appointmentId]
+ * @param {string} [params.confirmationCode]
+ */
+async function checkIn({ appointmentId, confirmationCode } = {}) {
+  if (!appointmentId && !confirmationCode) {
+    const err = new Error('An appointment id or confirmation code is required');
+    err.type = 'validation';
+    err.details = [{ field: 'appointment', message: 'Provide appointmentId or confirmationCode' }];
+    throw err;
+  }
+
+  const appointment = appointmentId
+    ? await appointmentsRepo.findById(appointmentId)
+    : await appointmentsRepo.findByConfirmationCode(confirmationCode);
+
+  if (!appointment) {
+    const err = new Error('Appointment not found');
+    err.type = 'not_found';
+    throw err;
+  }
+
+  // Cannot check in to a cancelled, completed, or no-show appointment.
+  if (TERMINAL_STATUSES.includes(appointment.status) || appointment.status === 'no_show') {
+    const err = new Error(`Cannot check in a ${appointment.status} appointment`);
+    err.type = 'conflict';
+    throw err;
+  }
+
+  // Already checked in -> reject (idempotent-safe: no duplicate side effects).
+  if (appointment.checked_in) {
+    const err = new Error('Appointment is already checked in');
+    err.type = 'conflict';
+    throw err;
+  }
+
+  return appointmentsRepo.update(appointment.id, {
+    checked_in: true,
+    checked_in_at: new Date(),
+    status: 'checked_in'
+  });
+}
+
+module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, checkIn, VALID_STATUSES };
