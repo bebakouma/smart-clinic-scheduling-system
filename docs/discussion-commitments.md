@@ -85,6 +85,25 @@ appointment before updating its status. Focus first on the basic endpoint, teste
 
 ---
 
+## Task 23 — Check-in kiosk UI  [DONE]
+
+### Q (Prof. Hatim Alzoubi): For Task 23, how will the kiosk verify the patient's identity before matching them to an appointment?
+**My answer:** The kiosk asks for the appointment confirmation code and date of
+birth, and only matches an appointment when both agree. A failed attempt returns
+the same generic error either way, and the confirmation screen shows only minimal
+details (first name and appointment time). Since the kiosk is not a staff user, its
+requests will be secured with a device token in Task 26.
+
+**Commitments / implications (status):**
+1. ✅ Code + date of birth required — `verifyKioskIdentity()` in `appointments.service.js`.
+2. ✅ Same generic error for wrong code and wrong date of birth (covered by unit and integration tests).
+3. ✅ Minimal response: only `first_name` and `appointment_datetime` (tests assert no last name, phone, email, notes, or date of birth).
+4. ✅ Identity is verified again on the check-in call, so the server never trusts the lookup step.
+5. ⏳ Device token for kiosk requests — Task 26. Until then `/api/kiosk/*` is open to anyone who has a valid code AND the matching date of birth, limited by the kiosk rate limit. Do not describe the kiosk as device-authenticated before Task 26 is done.
+6. Date of birth is a lightweight check suited to self check-in, not strong identity verification.
+
+---
+
 ## Notes
 
 - Keep this file updated after each weekly discussion exchange.

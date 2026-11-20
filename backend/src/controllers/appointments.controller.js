@@ -75,4 +75,21 @@ async function checkIn(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, checkIn };
+async function kioskLookup(req, res, next) {
+  try {
+    const view = await appointmentsService.kioskLookup(req.body);
+    success(res, view);
+  } catch (err) { next(err); }
+}
+
+async function kioskCheckIn(req, res, next) {
+  try {
+    const view = await appointmentsService.kioskCheckIn(req.body);
+    success(res, view);
+  } catch (err) { next(err); }
+}
+
+module.exports = {
+  getAll, getById, create, update, updateStatus, confirm, reschedule, remove,
+  checkIn, kioskLookup, kioskCheckIn
+};

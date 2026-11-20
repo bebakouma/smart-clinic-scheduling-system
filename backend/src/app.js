@@ -12,6 +12,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const authRoutes = require('./routes/auth.routes');
 const checkinRoutes = require('./routes/checkin.routes');
+const kioskRoutes = require('./routes/kiosk.routes');
 
 const app = express();
 
@@ -48,8 +49,20 @@ const authLimiter = rateLimit({
   message: { error: { message: 'Too many authentication attempts, please try again later', details: null } }
 });
 
+// Rate limit for the patient kiosk (no staff login). One kiosk shares one IP
+// across many patients, so this is kept above the auth limit, while still
+// making guessing a code + date of birth impractical.
+const kioskLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.KIOSK_RATE_LIMIT_MAX || '60', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: 'Too many attempts, please see the front desk', details: null } }
+});
+
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/kiosk', kioskLimiter, kioskRoutes);
 app.use('/api/patients', patientsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/reminders', remindersRoutes);
