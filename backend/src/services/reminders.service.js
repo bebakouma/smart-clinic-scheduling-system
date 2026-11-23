@@ -26,7 +26,12 @@ async function runReminders() {
     if (appt.reminder_logs.length > 0) continue;
 
     const contactMethod = appt.patient.preferred_contact_method || 'email';
-    const message = `Reminder: You have a ${appt.appointment_type} appointment on ${appt.appointment_datetime.toISOString()} with ${appt.provider_name}.`;
+    // Include the self check-in code (Task 23) so the patient can use the kiosk.
+    // Older appointments created before codes existed have none, so skip it.
+    const codeNote = appt.confirmation_code
+      ? ` Your check-in code is ${appt.confirmation_code}.`
+      : '';
+    const message = `Reminder: You have a ${appt.appointment_type} appointment on ${appt.appointment_datetime.toISOString()} with ${appt.provider_name}.${codeNote}`;
 
     // Deliver through the notification service abstraction. In dev/test this is
     // the console provider (logs only); in production it is SendGrid/Twilio.

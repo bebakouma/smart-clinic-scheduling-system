@@ -85,6 +85,23 @@ export const dashboardService = {
   getNoShows: () => request('/dashboard/no-shows')
 };
 
+// Patient kiosk (Task 23). The kiosk is not a staff user, so these calls
+// deliberately send no Authorization header, even if a staff token happens to
+// be stored in this browser.
+const kioskRequest = (endpoint, body) =>
+  request(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+export const kioskService = {
+  lookup: (confirmationCode, dateOfBirth) =>
+    kioskRequest('/kiosk/lookup', { confirmationCode, dateOfBirth }),
+  checkIn: (confirmationCode, dateOfBirth) =>
+    kioskRequest('/kiosk/checkin', { confirmationCode, dateOfBirth })
+};
+
 export const reminderService = {
   getLogs: () => request('/reminders/logs'),
   run: () => request('/reminders/run', { method: 'POST' })

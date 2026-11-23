@@ -29,4 +29,9 @@ const rescheduleSchema = Joi.object({
   reason: Joi.string().trim().allow(null, '').optional()
 });
 
-module.exports = { createSchema, updateSchema, statusSchema, rescheduleSchema, checkinSchema };
+const kioskSchema = Joi.object({
+  confirmationCode: Joi.string().trim().min(1).max(32).required(),
+  dateOfBirth: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required()
+});
+
+module.exports = { createSchema, updateSchema, statusSchema, rescheduleSchema, checkinSchema, kioskSchema };

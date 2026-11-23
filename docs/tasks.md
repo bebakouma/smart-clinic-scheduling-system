@@ -374,10 +374,17 @@ Extend the secured application with a real notification pipeline, patient self c
   - Added `tests/unit/checkin.service.test.js` (10) and `tests/integration/checkin.endpoint.test.js` (6: 401/403/400/200/409/404)
   - Staff-managed check-in now; patient self check-in via kiosk/IoT device comes in Tasks 23-26 (will use device auth)
 
-- [ ] 23. Check-in kiosk UI
+- [x] 23. Check-in kiosk UI
   - Create a tablet-style kiosk page in the frontend for patient self check-in
   - Simple flow: enter confirmation code / lookup, confirm, show success
   - _Requirements: IoT feature — self check-in_
+  - Frontend: `pages/Kiosk.jsx` at `/kiosk` (full screen, no staff sidebar). Steps: enter code + date of birth, confirm appointment, success. Clears itself after success (8s) and after 30s of inactivity on the confirm screen
+  - Backend: `POST /api/kiosk/lookup` (verify and show, no change) and `POST /api/kiosk/checkin` (verify again, then check in). No staff login; identity is confirmation code + date of birth
+  - Privacy: wrong code and wrong date of birth return the same generic 404; the response contains only first name and appointment time; a stricter rate limit (`KIOSK_RATE_LIMIT_MAX`, default 60 per 15 min)
+  - Confirmation codes: appointments now get an 8-character code on creation (`utils/confirmationCode.js`, no look-alike characters); the reminder message includes it
+  - Check-in rules from Task 22 are shared by staff and kiosk check-in (`assertCanCheckIn`)
+  - Tests: `kiosk.service.test.js` (unit) and `kiosk.endpoint.test.js` (integration)
+  - Known limits (interim until Task 26): kiosk routes have no device authentication yet; appointments created before this task have no code, so those patients check in with staff; the page was verified by a production build, not yet exercised in a browser
 
 - [ ] 24. Simulated IoT check-in device
   - Create a standalone device simulator (Node script) that sends check-in / occupancy events to the backend over HTTP or MQTT

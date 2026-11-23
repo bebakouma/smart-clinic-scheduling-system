@@ -7,8 +7,9 @@ import ScheduleAppointment from '../pages/ScheduleAppointment';
 import Waitlist from '../pages/Waitlist';
 import IntakeForm from '../pages/IntakeForm';
 import ReminderLogs from '../pages/ReminderLogs';
+import Kiosk from '../pages/Kiosk';
 
-export default function App() {
+function StaffRoutes() {
   return (
     <Layout>
       <Routes>
@@ -21,5 +22,15 @@ export default function App() {
         <Route path="/reminders" element={<ReminderLogs />} />
       </Routes>
     </Layout>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Patient kiosk: full screen, no staff sidebar or navigation */}
+      <Route path="/kiosk" element={<Kiosk />} />
+      <Route path="/*" element={<StaffRoutes />} />
+    </Routes>
   );
 }

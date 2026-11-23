@@ -1,5 +1,6 @@
 const appointmentsRepo = require('../repositories/appointments.repository');
 const patientsRepo = require('../repositories/patients.repository');
+const { generateConfirmationCode, normalizeConfirmationCode } = require('../utils/confirmationCode');
 
 const VALID_STATUSES = ['scheduled', 'confirmed', 'checked_in', 'cancelled', 'completed', 'no_show'];
 const TERMINAL_STATUSES = ['cancelled', 'completed'];
@@ -53,8 +54,23 @@ async function create(data) {
     appointment_type: data.appointment_type,
     appointment_datetime: new Date(data.appointment_datetime),
     status: 'scheduled',
+    confirmation_code: await createUniqueConfirmationCode(),
     notes: data.notes || null
   });
+}
+
+// Generate a confirmation code that is not already used. Collisions are
+// extremely unlikely (1.1 trillion combinations) but the column is unique, so
+// we check and retry rather than fail an appointment booking.
+async function createUniqueConfirmationCode() {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = generateConfirmationCode();
+    const existing = await appointmentsRepo.findByConfirmationCode(code);
+    if (!existing) return code;
+  }
+  const err = new Error('Could not generate a unique confirmation code');
+  err.type = 'conflict';
+  throw err;
 }
 
 async function update(id, data) {
@@ -209,6 +225,11 @@ async function checkIn({ appointmentId, confirmationCode } = {}) {
     throw err;
   }
 
+  return applyCheckIn(appointment);
+}
+
+// Check-in rules, shared by staff check-in and kiosk check-in.
+function assertCanCheckIn(appointment) {
   // Cannot check in to a cancelled, completed, or no-show appointment.
   if (TERMINAL_STATUSES.includes(appointment.status) || appointment.status === 'no_show') {
     const err = new Error(`Cannot check in a ${appointment.status} appointment`);
@@ -216,13 +237,16 @@ async function checkIn({ appointmentId, confirmationCode } = {}) {
     throw err;
   }
 
-  // Already checked in -> reject (idempotent-safe: no duplicate side effects).
+  // Already checked in -> reject (no duplicate side effects).
   if (appointment.checked_in) {
     const err = new Error('Appointment is already checked in');
     err.type = 'conflict';
     throw err;
   }
+}
 
+async function applyCheckIn(appointment) {
+  assertCanCheckIn(appointment);
   return appointmentsRepo.update(appointment.id, {
     checked_in: true,
     checked_in_at: new Date(),
@@ -230,4 +254,64 @@ async function checkIn({ appointmentId, confirmationCode } = {}) {
   });
 }
 
-module.exports = { getAll, getById, create, update, updateStatus, confirm, reschedule, remove, checkIn, VALID_STATUSES };
+// ── Kiosk (patient self check-in) ─────────────────────────────────────────
+
+// The kiosk has no staff login, so identity is confirmed with two things the
+// patient knows: the confirmation code and their date of birth.
+// A wrong code and a wrong date of birth produce the SAME error, so the kiosk
+// cannot be used to find out which codes exist.
+function kioskNoMatch() {
+  const err = new Error('We could not find a matching appointment. Please see the front desk.');
+  err.type = 'not_found';
+  return err;
+}
+
+function toDateOnly(value) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+async function verifyKioskIdentity({ confirmationCode, dateOfBirth }) {
+  const code = normalizeConfirmationCode(confirmationCode);
+  if (!code || !dateOfBirth) throw kioskNoMatch();
+
+  const appointment = await appointmentsRepo.findByConfirmationCode(code);
+  const patient = appointment && appointment.patient;
+  if (!patient || !patient.date_of_birth || toDateOnly(patient.date_of_birth) !== dateOfBirth) {
+    throw kioskNoMatch();
+  }
+  return appointment;
+}
+
+// Only what the patient needs to confirm it is their appointment.
+// Never return the full record (no phone, email, date of birth, notes).
+function kioskView(appointment) {
+  return {
+    first_name: appointment.patient.first_name,
+    appointment_datetime: appointment.appointment_datetime
+  };
+}
+
+/**
+ * Step 1 of kiosk check-in: verify the patient and show the appointment so
+ * they can confirm it. Does not change anything.
+ */
+async function kioskLookup({ confirmationCode, dateOfBirth }) {
+  const appointment = await verifyKioskIdentity({ confirmationCode, dateOfBirth });
+  assertCanCheckIn(appointment);
+  return kioskView(appointment);
+}
+
+/**
+ * Step 2: check the patient in. Identity is verified again here, so the
+ * server never trusts that the lookup step happened.
+ */
+async function kioskCheckIn({ confirmationCode, dateOfBirth }) {
+  const appointment = await verifyKioskIdentity({ confirmationCode, dateOfBirth });
+  await applyCheckIn(appointment);
+  return kioskView(appointment);
+}
+
+module.exports = {
+  getAll, getById, create, update, updateStatus, confirm, reschedule, remove,
+  checkIn, kioskLookup, kioskCheckIn, VALID_STATUSES
+};
