@@ -104,6 +104,34 @@ requests will be secured with a device token in Task 26.
 
 ---
 
+## Task 24 — Simulated IoT check-in device  [UPCOMING — honor these]
+## Task 26 — IoT security  [UPCOMING — honor these]
+
+### Q (Prof. Hatim Alzoubi): For Task 24, will the simulated IoT device run with no auth check at all until Task 26, or will you put a temporary placeholder check in now?
+**My answer:** A temporary placeholder check now, rather than leaving the device
+endpoint open. The simulated device sends a token with each request, and the
+backend validates it before processing the check-in event. In Task 26 this is
+replaced by unique device credentials and stronger authentication, so the IoT
+integration can be tested in Task 24 with basic security in place.
+
+**Commitments to implement in Task 24:**
+1. A placeholder device token check on the device endpoint. Plan: one shared token in an environment variable (e.g. `DEVICE_TOKEN`), sent by the simulator in a header, compared with a timing-safe comparison.
+2. The backend rejects a missing or wrong token (401) BEFORE processing the event or touching the database.
+3. The token is never hardcoded, never committed, and never logged. Add it to `.env.example` with an empty value.
+4. Tests: valid token accepted, missing token rejected, wrong token rejected.
+5. Document clearly that this is a temporary placeholder, not the final design.
+6. Be accurate about scope: this protects the simulated device endpoint only. The browser kiosk (`/api/kiosk/*`) cannot hold a secret safely, because anything in a web page is visible, so it stays protected by confirmation code + date of birth + rate limit. Do not describe the kiosk as token-protected.
+
+**Commitments to implement in Task 26:**
+1. Replace the shared placeholder with a unique token for each device.
+2. Enforce TLS for device communication in production config.
+3. Tests for device auth (valid / invalid / missing token), as already listed in `tasks.md`.
+4. "Stronger authentication" was promised in the reply but is not defined. Decide what it means (for example: tokens stored hashed, per-device identity in logs, short-lived tokens) and write it down before building.
+5. Token revocation: CONFIRM whether the posted reply included it. If it did, it needs a device table and a revoke action, which is more than `tasks.md` currently lists, so add it to Task 26 in `tasks.md` first. If the reply did not include it, treat it as optional.
+6. Decide how the browser kiosk is authenticated, since a token in a web page is not secret (for example a kiosk login, or a short-lived session started by staff). Deferred from Task 23.
+
+---
+
 ## Notes
 
 - Keep this file updated after each weekly discussion exchange.
