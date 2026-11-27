@@ -386,10 +386,17 @@ Extend the secured application with a real notification pipeline, patient self c
   - Tests: `kiosk.service.test.js` (unit) and `kiosk.endpoint.test.js` (integration)
   - Known limits (interim until Task 26): kiosk routes have no device authentication yet; appointments created before this task have no code, so those patients check in with staff; the page was verified by a production build, not yet exercised in a browser
 
-- [ ] 24. Simulated IoT check-in device
+- [x] 24. Simulated IoT check-in device
   - Create a standalone device simulator (Node script) that sends check-in / occupancy events to the backend over HTTP or MQTT
   - Document how to run the simulator
   - _Requirements: IoT feature — embedded device_
+  - Simulator: `scripts/iot-device-simulator.js` (no dependencies, Node 18+). Commands `checkin <CODE>`, `occupancy <COUNT>`, `run` (a short session where each successful scan raises the waiting-room count). Token only from `DEVICE_TOKEN`, never printed; codes masked in output; exit codes 0 / 1 / 2
+  - Backend: `POST /api/device/events` for `checkin` (by scanned confirmation code, reuses the Task 22 check-in rules, no patient details returned) and `occupancy` (latest count per device, in memory until Task 25)
+  - Temporary placeholder device token (`middleware/deviceAuth.js`): shared `DEVICE_TOKEN` in the `X-Device-Token` header, constant-time compare, 401 before validation or any database work, fails closed when unset. Replaced in Task 26
+  - Transport: HTTP (MQTT needs a separate broker)
+  - Docs: `docs/iot-device.md` (how to run, event format, security limits). Added `DEVICE_TOKEN` to `.env.example`
+  - Tests: `deviceAuth.middleware.test.js`, `device.service.test.js`, `device.endpoint.test.js`, `iot-simulator.test.js` (includes the simulator running against the real app over HTTP). Checked that the tests fail when the token check is removed
+  - Known limits (until Task 26): one shared token, so `deviceId` is a label and one device cannot be revoked; no TLS; occupancy is lost on restart
 
 - [ ] 25. Real-time dashboard updates
   - Push check-in and occupancy events to the staff dashboard live (WebSocket or polling)
