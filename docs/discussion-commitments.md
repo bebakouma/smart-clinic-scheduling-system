@@ -114,13 +114,13 @@ backend validates it before processing the check-in event. In Task 26 this is
 replaced by unique device credentials and stronger authentication, so the IoT
 integration can be tested in Task 24 with basic security in place.
 
-**Commitments to implement in Task 24:**
-1. A placeholder device token check on the device endpoint. Plan: one shared token in an environment variable (e.g. `DEVICE_TOKEN`), sent by the simulator in a header, compared with a timing-safe comparison.
-2. The backend rejects a missing or wrong token (401) BEFORE processing the event or touching the database.
-3. The token is never hardcoded, never committed, and never logged. Add it to `.env.example` with an empty value.
-4. Tests: valid token accepted, missing token rejected, wrong token rejected.
-5. Document clearly that this is a temporary placeholder, not the final design.
-6. Be accurate about scope: this protects the simulated device endpoint only. The browser kiosk (`/api/kiosk/*`) cannot hold a secret safely, because anything in a web page is visible, so it stays protected by confirmation code + date of birth + rate limit. Do not describe the kiosk as token-protected.
+**Commitments to implement in Task 24 (status: DONE):**
+1. ✅ Placeholder device token check: one shared `DEVICE_TOKEN` env var, sent in the `X-Device-Token` header, compared in constant time (`middleware/deviceAuth.js`).
+2. ✅ Missing or wrong token gets 401 BEFORE the body is validated or the database is touched (tests assert the database is not called, and that a wrong token plus an invalid body gives 401, not 400). It also fails closed when `DEVICE_TOKEN` is unset.
+3. ✅ Token is never hardcoded, committed, or logged (tests check responses and logs; the simulator never prints it). `DEVICE_TOKEN=` is in `.env.example` with no value.
+4. ✅ Tests for valid, missing, and wrong tokens, plus a staff JWT not being accepted as a device token.
+5. ✅ Documented as a temporary placeholder (`docs/iot-device.md`, code comments, `tasks.md`).
+6. ✅ Scope stated accurately: protects the device endpoint only; the browser kiosk is not token-protected (see `docs/iot-device.md`).
 
 **Commitments to implement in Task 26:**
 1. Replace the shared placeholder with a unique token for each device.

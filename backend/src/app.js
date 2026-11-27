@@ -13,6 +13,7 @@ const analyticsRoutes = require('./routes/analytics.routes');
 const authRoutes = require('./routes/auth.routes');
 const checkinRoutes = require('./routes/checkin.routes');
 const kioskRoutes = require('./routes/kiosk.routes');
+const deviceRoutes = require('./routes/device.routes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ const kioskLimiter = rateLimit({
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/kiosk', kioskLimiter, kioskRoutes);
+app.use('/api/device', deviceRoutes);
 app.use('/api/patients', patientsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/reminders', remindersRoutes);
